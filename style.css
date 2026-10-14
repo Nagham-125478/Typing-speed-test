@@ -12,6 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 15px;  
 }
 
 .container {
@@ -20,7 +21,7 @@ body {
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 102, 204, 0.08);
     width: 680px;
-    max-width: 90%;
+    max-width: 100%;  
     text-align: center;
     border: 1px solid #e0f2fe;
 }
@@ -194,4 +195,53 @@ button.reset-btn:hover {
 
 button.reset-btn:active {
     transform: scale(0.98);
+}
+
+ @media (max-width: 768px) {
+    .container {
+        padding: 20px;
+        border-radius: 15px;
+    }
+
+    .header-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .language-selector {
+        justify-content: center;
+    }
+
+    h1 {
+        font-size: 1.35rem;
+    }
+
+    .instruction-text {
+        font-size: 0.88rem;
+        text-align: center !important;
+    }
+
+    .stats-bar {
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    .text-display-box {
+        font-size: 1.05rem;
+        padding: 15px;
+        min-height: 95px;
+    }
+
+    textarea.input-field, .input-field {
+        height: 90px;
+        font-size: 1rem;
+        padding: 12px;
+    }
+
+    button.reset-btn, .reset-btn {
+        padding: 12px;
+        font-size: 1rem;
+    }
 }
