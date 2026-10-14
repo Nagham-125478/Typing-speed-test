@@ -1,186 +1,148 @@
- 
- const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyuy_ysXbnnbsAanEyNtccX0iiwKd6FGZIHy9YAC0zvejsvz1Bj_EZ-G3Rn5J9zPxsN/exec";
+const texts = {
+    ar: "البرمجة هي عملية كتابة تعليمات ووجهات توجيه للحاسوب لكي يقوم بمهام محددة وتطوير تطبيقات ويب مذهلة باستخدام أحدث التقنيات واللغات البرمجية المختلفة.",
+    en: "Programming is the process of creating a set of instructions that tell a computer how to perform a task. It allows developers to build amazing web applications using modern technologies."
+};
 
-const DEFAULT_PRICE = 2.50;
-const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80";
+const textDisplay = document.getElementById("textDisplay");
+const inputField = document.getElementById("inputField");
+const timerTag = document.getElementById("timer");
+const accuracyTag = document.getElementById("accuracy");
+const resetBtn = document.getElementById("resetBtn");
+const langSelect = document.getElementById("langSelect");
+const container = document.querySelector(".container");
+const resultMessage = document.getElementById("resultMessage");
 
-let menuItems = [];
-let cart = [];
- 
-async function fetchMenuItems() {
-    const container = document.getElementById("menuContainer");
+const instructionText = document.getElementById("instructionText");
+const timerLabel = document.getElementById("timerLabel");
+const secLabel = document.getElementById("secLabel");
+const accLabel = document.getElementById("accLabel");
 
-     const cachedData = localStorage.getItem("menuData");
-    if (cachedData) {
-        try {
-            menuItems = JSON.parse(cachedData);
-            displayMenuItems(menuItems);
-        } catch (e) {
-            console.error("خطأ في قراءة الكاش", e);
-        }
-    } else if (container) {
-        container.innerHTML = "<p style='text-align:center; grid-column: 1/-1; padding: 20px;'>جاري تحميل المنيو...</p>";
-    }
+let timer;
+let maxTime = 60;
+let timeLeft = maxTime;
+let charIndex = 0;
+let mistakes = 0;
+let isTyping = false;
 
-    try {
-        const response = await fetch(GOOGLE_SHEET_URL, { redirect: "follow" });
-        const data = await response.json();
+function loadParagraph() {
+    const currentLang = langSelect.value;
+    const typingText = texts[currentLang];
 
-        const newMenuItems = data.map((item, index) => {
-            const findKey = (keyName) => {
-                const found = Object.keys(item).find(k => k.toLowerCase().trim() === keyName.toLowerCase().trim());
-                return found ? item[found] : null;
-            };
-
-            const name = findKey("ItemName") || findKey("Name") || "صنف بدون اسم";
-            const category = findKey("Category") || "all";
-            const price = findKey("Price") || DEFAULT_PRICE;
-            const image = findKey("ImageUrl") || findKey("Image") || DEFAULT_IMAGE;
-
-            return {
-                id: index + 1,
-                name: String(name),
-                category: String(category).trim().toLowerCase(),
-                price: parseFloat(price) || DEFAULT_PRICE,
-                image: (image && String(image).trim() !== "") ? String(image).trim() : DEFAULT_IMAGE
-            };
-        });
-
-        menuItems = newMenuItems;
-        localStorage.setItem("menuData", JSON.stringify(menuItems));
-        displayMenuItems(menuItems);
-
-    } catch (error) {
-        console.error("خطأ في تحميل المنيو من الشيت:", error);
-    }
-}
- 
-function displayMenuItems(items) {
-    const container = document.getElementById("menuContainer");
-    if (!container) return;
-    
-    container.innerHTML = "";
-
-    if (items.length === 0) {
-        container.innerHTML = "<p style='text-align:center; grid-column: 1/-1; padding: 20px;'>لا توجد عناصر متاحة حالياً.</p>";
-        return;
-    }
-
-    items.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "menu-card";
-        card.innerHTML = `
-            <div class="card-image-container">
-                <img src="${item.image}" alt="${item.name}" class="item-img" loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_IMAGE}';">
-            </div>
-            <div class="card-body">
-                <h3>${item.name}</h3>
-                <span class="item-price">${item.price.toFixed(2)} د.أ</span>
-                <button class="add-to-cart-btn" onclick="addToCart(${item.id})">إضافة للسلة +</button>
-            </div>
-        `;
-        container.appendChild(card);
+    textDisplay.innerHTML = "";
+    typingText.split("").forEach(char => {
+        let span = `<span>${char}</span>`;
+        textDisplay.innerHTML += span;
     });
-}
-
-function filterCategory(category, event) {
-    const buttons = document.querySelectorAll('.nav-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
     
-    if (event && event.target) {
-        event.target.classList.add('active');
-    }
-
-    const selectedCategory = String(category).toLowerCase().trim();
-
-    if (selectedCategory === 'all') {
-        displayMenuItems(menuItems);
+    if (currentLang === 'ar') {
+        textDisplay.setAttribute("dir", "rtl");
+        inputField.setAttribute("dir", "rtl");
+        container.classList.remove("ltr");
+        instructionText.innerHTML = `قم بإعادة كتابة النص الظاهر في الصندوق أدناه بدقة، لديك <strong>دقيقة واحدة (60 ثانية)</strong> لإكمال الاختبار!`;
+        timerLabel.innerText = "الوقت المتبقي:";
+        secLabel.innerText = "ثانية";
+        accLabel.innerText = "نسبة الدقة:";
+        inputField.placeholder = "ابدأ الكتابة هنا فوراً...";
     } else {
-        const filtered = menuItems.filter(item => item.category === selectedCategory);
-        displayMenuItems(filtered);
-    }
-}
- 
-function addToCart(id) {
-    const item = menuItems.find(prod => prod.id === id);
-    if (!item) return;
-
-    const cartItem = cart.find(prod => prod.id === id);
-
-    if (cartItem) {
-        cartItem.quantity++;
-    } else {
-        cart.push({ ...item, quantity: 1 });
+        textDisplay.setAttribute("dir", "ltr");
+        inputField.setAttribute("dir", "ltr");
+        container.classList.add("ltr");
+        instructionText.innerHTML = `Type the text displayed in the box below accurately, you have <strong>one minute (60 seconds)</strong> to complete the test!`;
+        timerLabel.innerText = "Time Left:";
+        secLabel.innerText = "seconds";
+        accLabel.innerText = "Accuracy:";
+        inputField.placeholder = "Start typing here immediately...";
     }
 
-    updateCartUI();
+    textDisplay.querySelectorAll("span")[0].classList.add("active");
 }
 
-function changeQuantity(id, change) {
-    const cartItem = cart.find(prod => prod.id === id);
-    if (cartItem) {
-        cartItem.quantity += change;
-        if (cartItem.quantity <= 0) {
-            cart = cart.filter(prod => prod.id !== id);
+function initTyping() {
+    const currentLang = langSelect.value;
+    const typingText = texts[currentLang];
+    const characters = textDisplay.querySelectorAll("span");
+    const typedChar = inputField.value.split("")[charIndex];
+
+    if (!isTyping) {
+        timer = setInterval(initTimer, 1000);
+        isTyping = true;
+    }
+
+    if (typedChar == null) {
+        if (charIndex > 0) {
+            charIndex--;
+            if (characters[charIndex].classList.contains("incorrect")) {
+                mistakes--;
+            }
+            characters[charIndex].classList.remove("correct", "incorrect");
         }
-    }
-    updateCartUI();
-}
-
-function updateCartUI() {
-    const cartContainer = document.getElementById("cartItemsContainer");
-    const cartCount = document.getElementById("cartCount");
-    const totalAmount = document.getElementById("totalAmount");
-
-    if (!cartContainer) return;
-
-    cartContainer.innerHTML = "";
-    let total = 0;
-    let count = 0;
-
-    if (cart.length === 0) {
-        cartContainer.innerHTML = `<p class="empty-msg">السلة فارغة حالياً</p>`;
     } else {
-        cart.forEach(item => {
-            const itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            count += item.quantity;
-
-            const cartRow = document.createElement("div");
-            cartRow.className = "cart-item";
-            cartRow.innerHTML = `
-                <div class="cart-item-info">
-                    <h4>${item.name}</h4>
-                    <span class="cart-item-price">${item.quantity}x (${item.price.toFixed(2)} د.أ) = <b>${itemTotal.toFixed(2)} د.أ</b></span>
-                </div>
-                <div class="quantity-controls">
-                    <button onclick="changeQuantity(${item.id}, -1)">-</button>
-                    <span>${item.quantity}</span>
-                    <button onclick="changeQuantity(${item.id}, 1)">+</button>
-                </div>
-            `;
-            cartContainer.appendChild(cartRow);
-        });
+        if (characters[charIndex].innerText === typedChar) {
+            characters[charIndex].classList.add("correct");
+        } else {
+            mistakes++;
+            characters[charIndex].classList.add("incorrect");
+        }
+        charIndex++;
     }
 
-    if (cartCount) cartCount.textContent = count;
-    if (totalAmount) totalAmount.textContent = `${total.toFixed(2)} د.أ`;
-}
-
-function toggleCart() {
-    const modal = document.getElementById("cartModal");
-    if (modal) modal.classList.toggle("active");
-}
- 
-document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase().trim();
-            const filtered = menuItems.filter(item => item.name.toLowerCase().includes(searchTerm));
-            displayMenuItems(filtered);
-        });
+    characters.forEach(span => span.classList.remove("active"));
+    
+    // التحقق مما إذا أنهى المستخدم كتابة النص بالكامل (نجاح)
+    if (charIndex < characters.length) {
+        characters[charIndex].classList.add("active");
+    } else {
+        clearInterval(timer);
+        inputField.disabled = true;
+        showResult(true, currentLang); // إظهار رسالة النجاح
     }
 
-    fetchMenuItems();
-});
+    let accuracy = 100;
+    if (charIndex > 0 && mistakes <= charIndex) {
+        accuracy = Math.floor(((charIndex - mistakes) / charIndex) * 100);
+    }
+    accuracyTag.innerText = accuracy;
+}
+
+function initTimer() {
+    const currentLang = langSelect.value;
+    if (timeLeft > 0) {
+        timeLeft--;
+        timerTag.innerText = timeLeft;
+    } else {
+        clearInterval(timer);
+        inputField.disabled = true;
+        showResult(false, currentLang); // إظهار رسالة الفشل عند نفاد الوقت
+    }
+}
+
+function showResult(isSuccess, lang) {
+    resultMessage.className = "result-message"; // إعادة تعيين الكلاسات
+    if (isSuccess) {
+        resultMessage.classList.add("success");
+        resultMessage.innerText = lang === 'ar' ? "🎉 مبروك! لقد نجحت وأنهيت النص في الوقت المحدد." : "🎉 Success! You completed the text on time.";
+    } else {
+        resultMessage.classList.add("fail");
+        resultMessage.innerText = lang === 'ar' ? "❌ انتهى الوقت! لقد فشلت في إكمال النص، حاول مرة أخرى." : "❌ Time's up! You failed to complete the text, try again.";
+    }
+}
+
+function resetGame() {
+    clearInterval(timer);
+    timeLeft = maxTime;
+    charIndex = 0;
+    mistakes = 0;
+    isTyping = false;
+    timerTag.innerText = timeLeft;
+    accuracyTag.innerText = 100;
+    inputField.value = "";
+    inputField.disabled = false;
+    resultMessage.className = "result-message"; // إخفاء رسالة النتيجة
+    loadParagraph();
+}
+
+inputField.addEventListener("input", initTyping);
+resetBtn.addEventListener("click", resetGame);
+langSelect.addEventListener("change", resetGame);
+
+loadParagraph();
