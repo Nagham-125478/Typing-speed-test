@@ -95,8 +95,7 @@ h1 {
     font-weight: 700;
 }
 
-/* تنسيق زر النافذة المنبثقة */
-.swal-button.mm {
+ .swal-button.mm {
     background-color: #0284c7 !important;
     font-family: 'Cairo', sans-serif !important;
     font-weight: 700 !important;
