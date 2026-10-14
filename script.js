@@ -1,5 +1,5 @@
 const texts = {
-    ar: "البرمجة هي عملية كتابة تعليمات ووجهات توجيه للحاسوب لكي يقوم بمهام محددة وتطوير تطبيقات ويب مذهلة باستخدام أحدث التقنيات واللغات البرمجية المختلفة.",
+    ar: "البرمجة هي عملية كتابة تعليمات ووجهات توجيه للحاسوب لكي يقوم بمهام محددة وتطوير تطبيقات ويب مذهلة باستخدام أحدث التقنيات واللغات البرمجية المختلفة",
     en: "Programming is the process of creating a set of instructions that tell a computer how to perform a task. It allows developers to build amazing web applications using modern technologies."
 };
 
