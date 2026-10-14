@@ -10,7 +10,6 @@ const accuracyTag = document.getElementById("accuracy");
 const resetBtn = document.getElementById("resetBtn");
 const langSelect = document.getElementById("langSelect");
 const container = document.querySelector(".container");
-const resultMessage = document.getElementById("resultMessage");
 
 const instructionText = document.getElementById("instructionText");
 const timerLabel = document.getElementById("timerLabel");
@@ -59,7 +58,6 @@ function loadParagraph() {
 
 function initTyping() {
     const currentLang = langSelect.value;
-    const typingText = texts[currentLang];
     const characters = textDisplay.querySelectorAll("span");
     const typedChar = inputField.value.split("")[charIndex];
 
@@ -88,13 +86,12 @@ function initTyping() {
 
     characters.forEach(span => span.classList.remove("active"));
     
-    // التحقق مما إذا أنهى المستخدم كتابة النص بالكامل (نجاح)
     if (charIndex < characters.length) {
         characters[charIndex].classList.add("active");
     } else {
         clearInterval(timer);
         inputField.disabled = true;
-        showResult(true, currentLang); // إظهار رسالة النجاح
+        showResult(true, currentLang);
     }
 
     let accuracy = 100;
@@ -112,18 +109,29 @@ function initTimer() {
     } else {
         clearInterval(timer);
         inputField.disabled = true;
-        showResult(false, currentLang); // إظهار رسالة الفشل عند نفاد الوقت
+        showResult(false, currentLang);
     }
 }
 
 function showResult(isSuccess, lang) {
-    resultMessage.className = "result-message"; // إعادة تعيين الكلاسات
     if (isSuccess) {
-        resultMessage.classList.add("success");
-        resultMessage.innerText = lang === 'ar' ? "🎉 مبروك! لقد نجحت وأنهيت النص في الوقت المحدد." : "🎉 Success! You completed the text on time.";
+        swal({
+            title: lang === 'ar' ? "🎉 مبروك!" : "🎉 Success!",
+            text: lang === 'ar' ? "لقد نجحت وأنهيت النص في الوقت المحدد." : "You completed the text on time.",
+            button: lang === 'ar' ? "تمام" : "OK",
+            className: "mm",
+        }).then(() => {
+            resetGame();
+        });
     } else {
-        resultMessage.classList.add("fail");
-        resultMessage.innerText = lang === 'ar' ? "❌ انتهى الوقت! لقد فشلت في إكمال النص، حاول مرة أخرى." : "❌ Time's up! You failed to complete the text, try again.";
+        swal({
+            title: lang === 'ar' ? "❌ انتهى الوقت!" : "❌ Time's Up!",
+            text: lang === 'ar' ? "لقد فشلت في إكمال النص، حاول مرة أخرى." : "You failed to complete the text, try again.",
+            button: lang === 'ar' ? "حاول مجدداً" : "Retry",
+            className: "mm",
+        }).then(() => {
+            resetGame();
+        });
     }
 }
 
@@ -137,7 +145,6 @@ function resetGame() {
     accuracyTag.innerText = 100;
     inputField.value = "";
     inputField.disabled = false;
-    resultMessage.className = "result-message"; // إخفاء رسالة النتيجة
     loadParagraph();
 }
 
